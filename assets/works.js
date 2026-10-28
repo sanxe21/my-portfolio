@@ -54,7 +54,7 @@ const ov = $("#ov"), modal = $("#modal"), mc = $("#mContent");
 let opener = null;
 function body(w){
   const c = w.compare;
-  const media = c ? `<div><div class="cmp" style="--pos:50%">${img(c.before.src, c.before.alt || c.before.label)}<div class="cb">${img(c.after.src, c.after.alt || c.after.label)}</div>
+  const media = c ? `<div><div class="cmp" style="--pos:50%${c.ratio ? ";aspect-ratio:" + esc(c.ratio) : ""}">${img(c.before.src, c.before.alt || c.before.label)}<div class="cb">${img(c.after.src, c.after.alt || c.after.label)}</div>
 <span class="cmp-h" aria-hidden="true"></span><span class="cmp-l l1" aria-hidden="true">${esc(c.before.label)}</span><span class="cmp-l l2" aria-hidden="true">${esc(c.after.label)}</span>
 <input type="range" min="0" max="100" value="50" aria-label="Сравнение кадров: ${esc(c.before.label)} и ${esc(c.after.label)}"></div>
 <p class="cmp-hint">Потяните ползунок, чтобы сравнить: ${esc(c.before.label.toLowerCase())} и ${esc(c.after.label.toLowerCase())}.</p></div>`

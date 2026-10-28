@@ -162,7 +162,7 @@ body::after{content:"";position:fixed;inset:0;z-index:150;pointer-events:none;op
 .ck li{position:relative;padding-left:20px;margin-top:8px;font-size:15px;line-height:22px}
 .ck li:first-child{margin-top:0}
 .ck li::before{content:"";position:absolute;left:0;top:8px;width:8px;height:8px;border-radius:50%;background:var(--accent)}
-.dkm{position:relative;aspect-ratio:16/9;max-width:420px;margin:8px 0 16px 12px}
+.dkm{position:relative;aspect-ratio:16/9;max-width:420px;margin:8px 0 36px 12px}
 .dkm i{position:absolute;inset:0;border-radius:10px;border:1px solid var(--border);transition:transform .7s cubic-bezier(.22,1,.36,1)}
 .dkm .s1{background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 22%,var(--surface)),var(--surface));transform:rotate(-7deg) translate(-5%,6%)}
 .dkm .s2{background:linear-gradient(135deg,color-mix(in srgb,hsl(280 70% 60%) 18%,var(--surface)),var(--surface));transform:rotate(4deg) translate(4%,3%)}
