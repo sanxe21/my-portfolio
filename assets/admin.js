@@ -73,12 +73,13 @@ function tidy(w){
   o.task = s(w.task);
   o.done = (w.done || []).map(s).filter(Boolean);
   o.gallery = G.map(g => { const x = { src: g.src }; if (s(g.caption)) x.caption = s(g.caption); if (s(g.alt)) x.alt = s(g.alt); if (g.w && g.h) { x.w = g.w; x.h = g.h } return x });
-  const D = (w.docs || []).filter(d => d && d.pages && d.pages.length);
-  if (D.length) o.docs = D.map(d => { const x = { title: s(d.title) || "Дизайн-проект", pages: d.pages.map(p => ({ src: p.src, w: p.w, h: p.h })) }; if (d.pdf && d.download !== false) { x.pdf = d.pdf; if (d.size) x.size = d.size } return x });
+  const D = (w.docs || []).filter(d => d && (d.pdf || (d.pages && d.pages.length)));
+  if (D.length) o.docs = D.map(d => { const P = (d.pages || []).map(p => ({ src: p.src, w: p.w, h: p.h })), c = d.cover || P[0];
+    const x = { title: s(d.title) || "Дизайн-проект", count: d.count || P.length }; if (d.pdf) x.pdf = d.pdf; if (d.size) x.size = d.size; if (c) x.cover = { src: c.src, w: c.w, h: c.h }; if (P.length) x.pages = P; return x });
   return o;
 }
 const serialize = d => HEAD + "const WORKS = " + JSON.stringify(d.map(tidy), null, 2) + ";\n";
-function paths(d){ const p = new Set(); d.map(tidy).forEach(w => { if (w.cover) p.add(w.cover); if (w.compare) { p.add(w.compare.before.src); p.add(w.compare.after.src) } w.gallery.forEach(g => p.add(g.src)); (w.docs || []).forEach(d => { d.pages.forEach(x => p.add(x.src)); if (d.pdf) p.add(d.pdf) }) }); return p }
+function paths(d){ const p = new Set(); d.map(tidy).forEach(w => { if (w.cover) p.add(w.cover); if (w.compare) { p.add(w.compare.before.src); p.add(w.compare.after.src) } w.gallery.forEach(g => p.add(g.src)); (w.docs || []).forEach(d => { (d.pages || []).forEach(x => p.add(x.src)); if (d.cover) p.add(d.cover.src); if (d.pdf) p.add(d.pdf) }) }); return p }
 const isDirty = () => JSON.stringify(data.map(tidy)) !== JSON.stringify(orig.map(tidy));
 const editChanged = () => !!cur && JSON.stringify(cur) !== snap;
 function markDirty(){ const d = isDirty(); $("#dirty").classList.toggle("on", d); $("#bPublish").disabled = !d }
@@ -172,7 +173,7 @@ ${G.length ? `<ul class="g-list" id="gl">${G.map((g, i) => `<li class="gi" data-
 ${drop("gal", true)}
 </fieldset>
 
-<fieldset class="sec"><legend>PDF-альбом</legend><p class="sec-d">Подача проекта целиком: дизайн-проект, планировки, презентация. Страницы превратятся в картинки, и на сайте альбом можно будет листать на любом устройстве. Оригинал PDF можно дать скачать.</p>
+<fieldset class="sec"><legend>PDF-файлы</legend><p class="sec-d">Дизайн-проект, планировки, презентация. На сайте у файла будет обложка из первой страницы и кнопки «Открыть» и «Скачать». Если хотите, страницы можно ещё и листать прямо на сайте.</p>
 ${(cur.docs || []).length ? `<ul class="d-list">${cur.docs.map((d, i) => docItem(d, i)).join("")}</ul>` : ""}
 ${dropPdf()}
 </fieldset>
@@ -181,14 +182,14 @@ ${dropPdf()}
 }
 const plural = (n, a, b, c) => { const m = n % 10, h = n % 100; return n + " " + (m === 1 && h !== 11 ? a : m >= 2 && m <= 4 && (h < 12 || h > 14) ? b : c) };
 const mb = n => !n ? "" : n < 1048576 ? Math.max(1, Math.round(n / 1024)) + " КБ" : (n / 1048576 < 10 ? (n / 1048576).toFixed(1).replace(".", ",") : Math.round(n / 1048576)) + " МБ";
-const canDl = d => !!d.pdf && (pend.has(d.pdf) || paths(orig).has(d.pdf));
-const dropPdf = () => `<label class="drop" data-up="pdf"><input type="file" accept="application/pdf,.pdf" data-up="pdf" aria-label="Загрузить PDF"><span>Перетащите PDF или <b>выберите файл</b></span><small>До ${MAXP} страниц. Чтобы PDF можно было скачать, он должен весить меньше ${MAXPDF} МБ.</small></label>`;
+const dropPdf = () => `<label class="drop" data-up="pdf"><input type="file" accept="application/pdf,.pdf" data-up="pdf" aria-label="Загрузить PDF"><span>Перетащите PDF или <b>выберите файл</b></span><small>До ${MAXPDF} МБ. Посетители смогут открыть его в браузере и скачать.</small></label>`;
 function docItem(d, i){
-  const n = d.pages.length, dl = canDl(d), last = cur.docs.length - 1;
-  return `<li class="di"><div class="dcv">${imgT(d.pages[0].src, "", true)}<span class="n">${plural(n, "страница", "страницы", "страниц")}</span></div>
-<div class="dbd"><div class="f" style="margin:0"><label for="dt${i}">Название альбома</label><input class="in" id="dt${i}" data-dt="${i}" value="${esc(d.title || "")}" placeholder="Например: Дизайн-проект спальни"></div>
-<label class="chk"><input type="checkbox" data-dl="${i}"${dl && d.download !== false ? " checked" : ""}${dl ? "" : " disabled"}><span>Можно скачать PDF${d.size ? " (" + mb(d.size) + ")" : ""}${dl ? "" : d.big ? " — файл тяжелее " + MAXPDF + " МБ, будет только листание" : " — оригинала нет, загрузите PDF заново"}</span></label>
-<div class="bt"><button class="ib" type="button" data-da="u" data-i="${i}" aria-label="Выше"${i ? "" : " disabled"}>${I.up}</button><button class="ib" type="button" data-da="d" data-i="${i}" aria-label="Ниже"${i < last ? "" : " disabled"}>${I.down}</button><button class="ib" type="button" data-da="x" data-i="${i}" aria-label="Удалить альбом">${I.x}</button></div></div></li>`;
+  const P = d.pages || [], c = d.cover || P[0], n = d.count || P.length, last = cur.docs.length - 1;
+  const meta = [plural(n, "страница", "страницы", "страниц"), d.pdf ? "PDF " + mb(d.size) : "без файла"].join(" · ");
+  return `<li class="di"><div class="dcv">${c ? imgT(c.src, "", true) : ""}<span class="n">${esc(meta)}</span></div>
+<div class="dbd"><div class="f" style="margin:0"><label for="dt${i}">Название</label><input class="in" id="dt${i}" data-dt="${i}" value="${esc(d.title || "")}" placeholder="Например: Дизайн-проект спальни"></div>
+<label class="chk"><input type="checkbox" data-flip="${i}"${P.length ? " checked" : ""}${d.pdf ? "" : " disabled"}><span>Листать страницы прямо на сайте${P.length ? " — " + plural(P.length, "страница готова", "страницы готовы", "страниц готово") : " (необязательно: без этого PDF откроется в браузере)"}</span></label>
+<div class="bt"><button class="ib" type="button" data-da="u" data-i="${i}" aria-label="Выше"${i ? "" : " disabled"}>${I.up}</button><button class="ib" type="button" data-da="d" data-i="${i}" aria-label="Ниже"${i < last ? "" : " disabled"}>${I.down}</button><button class="ib" type="button" data-da="x" data-i="${i}" aria-label="Удалить PDF">${I.x}</button></div></div></li>`;
 }
 function setK(k, v){ const p = k.split("."); let o = cur; while (p.length > 1) o = o[p.shift()]; o[p[0]] = v }
 const fE = $("#fEdit");
@@ -197,7 +198,6 @@ fE.addEventListener("input", e => {
   const t = e.target, k = t.dataset.k;
   if (t.dataset.g != null) { cur.gallery[+t.dataset.g].caption = t.value; return }
   if (t.dataset.dt != null) { cur.docs[+t.dataset.dt].title = t.value; return }
-  if (t.dataset.dl != null) { cur.docs[+t.dataset.dl].download = t.checked; return }
   if (!k) return;
   t.classList.remove("bad");
   if (k === "done") cur.done = t.value.split("\n").map(x => x.trim()).filter(Boolean);
@@ -210,12 +210,13 @@ fE.addEventListener("change", e => {
   const t = e.target;
   if (t.dataset.k === "id") { cur.id = slug(t.value); t.value = cur.id; $("#idv").textContent = cur.id || "…" }
   if (t.dataset.act === "cmp") { if (t.checked) cur.compare = stash || { ratio: "", before: { src: "", label: "До" }, after: { src: "", label: "После" } }; else { stash = cur.compare; cur.compare = null } drawForm() }
+  if (t.dataset.flip != null) { setFlip(+t.dataset.flip, t.checked); return }
   if (t.type === "file" && t.files.length) { addFiles(t.dataset.up, t.files); t.value = "" }
 });
 fE.addEventListener("click", e => {
   const rm = e.target.closest("[data-rm]"), ga = e.target.closest("[data-ga]"), f = e.target.closest("[data-f]"), da = e.target.closest("[data-da]");
   if (da) { const i = +da.dataset.i, D = cur.docs;
-    if (da.dataset.da === "x") { if (!confirm("Убрать альбом «" + (D[i].title || "без названия") + "»?")) return; D.splice(i, 1) } else { const j = da.dataset.da === "u" ? i - 1 : i + 1; [D[i], D[j]] = [D[j], D[i]] }
+    if (da.dataset.da === "x") { if (!confirm("Убрать PDF «" + (D[i].title || "без названия") + "»?")) return; D.splice(i, 1) } else { const j = da.dataset.da === "u" ? i - 1 : i + 1; [D[i], D[j]] = [D[j], D[i]] }
     drawForm(); return }
   if (rm) { const k = rm.dataset.rm; if (k === "cover") cur.cover = ""; else { cur.compare[k].src = ""; delete cur.compare[k].w; delete cur.compare[k].h } drawForm() }
   else if (ga) { const i = +ga.dataset.i, G = cur.gallery;
@@ -280,41 +281,59 @@ async function addFiles(kind, list){
   if (ok && kind === "gal") toast(ok === 1 ? "Фото добавлено в галерею." : `Добавлено фото: ${ok}.`);
 }
 
-/* PDF: страницы → картинки (pdf.js лежит в assets/vendor/pdfjs и грузится только здесь) */
-const MAXP = 80, MAXPDF = 45, PJ = new URL("assets/vendor/pdfjs/", location.href).href;
+/* PDF: файл для открытия и скачивания, обложка — первая страница; по желанию все страницы картинками для листания.
+   pdf.js лежит в assets/vendor/pdfjs и грузится только здесь */
+const MAXP = 80, MAXPDF = 50, PJ = new URL("assets/vendor/pdfjs/", location.href).href;
 let pdfjs = null;
+async function openPdf(bytes){
+  if (!pdfjs) { pdfjs = await import(PJ + "pdf.min.mjs"); pdfjs.GlobalWorkerOptions.workerSrc = PJ + "pdf.worker.min.mjs" }
+  const task = pdfjs.getDocument({ data: bytes, cMapUrl: PJ + "cmaps/", cMapPacked: true, standardFontDataUrl: PJ + "standard_fonts/", wasmUrl: PJ + "wasm/", iccUrl: PJ + "iccs/" });
+  return { task, doc: await task.promise };
+}
+async function renderPage(doc, k, path, long){
+  const pg = await doc.getPage(k), v1 = pg.getViewport({ scale: 1 });
+  let sc = long / Math.max(v1.width, v1.height); if (v1.width * sc * v1.height * sc > 12e6) sc = Math.sqrt(12e6 / (v1.width * v1.height));
+  const vp = pg.getViewport({ scale: sc }), c = document.createElement("canvas"); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+  const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height);
+  await pg.render({ canvas: c, canvasContext: x, viewport: vp }).promise; pg.cleanup();
+  let blob = await toBlob(c, "image/webp", .85); if (!blob || blob.type !== "image/webp") blob = await toBlob(c, "image/jpeg", .87);
+  const src = path + (blob.type === "image/webp" ? ".webp" : ".jpg"), r = { src, w: c.width, h: c.height };
+  pend.set(src, { blob, url: URL.createObjectURL(blob) }); c.width = c.height = 0; return r;
+}
+async function renderAll(doc, base, made){
+  const n = Math.min(doc.numPages, MAXP), out = [];
+  for (let k = 1; k <= n; k++) { busy(true, `Готовлю страницу ${k} из ${n}…`); const r = await renderPage(doc, k, base + "-p" + String(k).padStart(2, "0"), 2200); made.push(r.src); out.push(r) }
+  return out;
+}
+const pdfErr = e => toast("Не получилось открыть PDF" + (/password/i.test(e.name + e.message) ? ": он защищён паролем. Сохраните копию без пароля." : ": " + esc(e.message)), true);
 async function addPdf(file){
   if (!file) { toast("Это не PDF.", true); return }
   busy(true, "Открываю PDF…");
-  const base = slug(cur.id || cur.title) || "case", tag = Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
-  const made = [];
+  const base = DIR + (slug(cur.id || cur.title) || "case") + "-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), made = [];
+  let task = null;
   try {
-    if (!pdfjs) { pdfjs = await import(PJ + "pdf.min.mjs"); pdfjs.GlobalWorkerOptions.workerSrc = PJ + "pdf.worker.min.mjs" }
-    const buf = new Uint8Array(await file.arrayBuffer());
-    const task = pdfjs.getDocument({ data: buf.slice(), cMapUrl: PJ + "cmaps/", cMapPacked: true, standardFontDataUrl: PJ + "standard_fonts/", wasmUrl: PJ + "wasm/", iccUrl: PJ + "iccs/" }), doc = await task.promise;
-    const total = doc.numPages, n = Math.min(total, MAXP), pages = [];
-    for (let k = 1; k <= n; k++) {
-      busy(true, `Готовлю страницу ${k} из ${n}…`);
-      const pg = await doc.getPage(k), v1 = pg.getViewport({ scale: 1 });
-      let sc = 2200 / Math.max(v1.width, v1.height); if (v1.width * sc * v1.height * sc > 12e6) sc = Math.sqrt(12e6 / (v1.width * v1.height));
-      const vp = pg.getViewport({ scale: sc }), c = document.createElement("canvas"); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
-      const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height);
-      await pg.render({ canvas: c, canvasContext: x, viewport: vp }).promise; pg.cleanup();
-      let blob = await toBlob(c, "image/webp", .85); if (!blob || blob.type !== "image/webp") blob = await toBlob(c, "image/jpeg", .87);
-      const p = DIR + base + "-" + tag + "-p" + String(k).padStart(2, "0") + (blob.type === "image/webp" ? ".webp" : ".jpg");
-      pend.set(p, { blob, url: URL.createObjectURL(blob) }); made.push(p); pages.push({ src: p, w: c.width, h: c.height });
-      c.width = c.height = 0;
-    }
-    try { await task.destroy() } catch (_) {}
-    const d = { title: file.name.replace(/\.pdf$/i, "").replace(/[_]+/g, " ").trim(), pages, size: file.size };
-    if (file.size <= MAXPDF * 1048576) { d.pdf = DIR + base + "-" + tag + ".pdf"; pend.set(d.pdf, { blob: file, url: URL.createObjectURL(file) }); d.download = true }
-    else d.big = true;
+    const big = file.size > MAXPDF * 1048576, o = await openPdf(new Uint8Array(await file.arrayBuffer())); task = o.task;
+    const d = { title: file.name.replace(/\.pdf$/i, "").replace(/[_]+/g, " ").trim(), count: o.doc.numPages, size: file.size, pages: [] };
+    busy(true, "Делаю обложку…"); d.cover = await renderPage(o.doc, 1, base + "-cover", 1400); made.push(d.cover.src);
+    if (big) d.pages = await renderAll(o.doc, base, made);
+    else { d.pdf = base + ".pdf"; pend.set(d.pdf, { blob: file, url: URL.createObjectURL(file) }) }
     (cur.docs = cur.docs || []).push(d);
-    toast(`Альбом добавлен: ${plural(n, "страница", "страницы", "страниц")}.` + (total > n ? ` В PDF ${total} стр. — взял первые ${MAXP}.` : "") + (d.big ? ` PDF тяжелее ${MAXPDF} МБ, поэтому на сайте будет только листание.` : ""), false, 7000);
-  } catch (e) {
-    made.forEach(p => pend.delete(p));
-    toast("Не получилось открыть PDF" + (/password/i.test(e.name + e.message) ? ": он защищён паролем. Сохраните копию без пароля." : ": " + esc(e.message)), true);
-  } finally { busy(false); drawForm() }
+    toast(big ? `PDF тяжелее ${MAXPDF} МБ — GitHub не примет такой файл. Добавил страницы для листания на сайте; чтобы дать скачать, сожмите PDF и загрузите заново.` : `PDF добавлен: ${plural(d.count, "страница", "страницы", "страниц")}, ${mb(file.size)}.`, big, big ? 12000 : 5000);
+  } catch (e) { made.forEach(p => pend.delete(p)); pdfErr(e) }
+  finally { if (task) try { await task.destroy() } catch (_) {} busy(false); drawForm() }
+}
+async function setFlip(i, on){
+  const d = cur.docs[i];
+  if (!on) { if (d.pdf) d.pages = []; drawForm(); return }
+  busy(true, "Открываю PDF…"); const made = []; let task = null;
+  try {
+    let blob = pend.has(d.pdf) ? pend.get(d.pdf).blob : null;
+    if (!blob) { let r = await fetch(d.pdf, { cache: "no-store" }).catch(() => null); if (!r || !r.ok) r = await fetch("https://raw.githubusercontent.com/" + cfg.repo + "/" + cfg.branch + "/" + d.pdf); if (!r.ok) throw new Error("файл не скачался"); blob = await r.blob() }
+    const o = await openPdf(new Uint8Array(await blob.arrayBuffer())); task = o.task;
+    d.pages = await renderAll(o.doc, d.pdf.replace(/\.pdf$/i, "") + "-" + Date.now().toString(36), made); d.count = o.doc.numPages;
+    if (d.count > MAXP) toast(`В PDF ${d.count} стр. — для листания взял первые ${MAXP}. Скачать можно весь файл.`, false, 7000);
+  } catch (e) { made.forEach(p => pend.delete(p)); pdfErr(e) }
+  finally { if (task) try { await task.destroy() } catch (_) {} busy(false); drawForm() }
 }
 
 function apply(){
@@ -340,7 +359,7 @@ function preview(withCur){
   const d = data.map(tidy); let id = "";
   if (withCur && cur) { const c = tidy(Object.assign({}, cur, { id: slug(cur.id) || "preview" })); id = c.id; if (editIdx < 0) d.unshift(c); else d[editIdx] = c }
   const m = p => p ? view(p) : p;
-  d.forEach(w => { w.cover = m(w.cover); if (w.compare) { w.compare.before.src = m(w.compare.before.src); w.compare.after.src = m(w.compare.after.src) } w.gallery.forEach(g => g.src = m(g.src)); (w.docs || []).forEach(d => { d.pages.forEach(x => x.src = m(x.src)); if (d.pdf) d.pdf = m(d.pdf) }) });
+  d.forEach(w => { w.cover = m(w.cover); if (w.compare) { w.compare.before.src = m(w.compare.before.src); w.compare.after.src = m(w.compare.after.src) } w.gallery.forEach(g => g.src = m(g.src)); (w.docs || []).forEach(d => { (d.pages || []).forEach(x => x.src = m(x.src)); if (d.cover) d.cover.src = m(d.cover.src); if (d.pdf) d.pdf = m(d.pdf) }) });
   try { localStorage.setItem("pvltsk-preview", JSON.stringify(d)) } catch (_) { toast("Браузер не дал сохранить предпросмотр.", true); return }
   open("works.html?preview=local" + (id ? "#" + encodeURIComponent(id) : ""), "pvltsk-preview");
 }

@@ -22,7 +22,7 @@ const arrow = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" s
 const isTall = g => g.w && g.h && g.h / g.w > 1.35;
 const plural = (n, a, b, c) => { const m = n % 10, h = n % 100; return n + " " + (m === 1 && h !== 11 ? a : m >= 2 && m <= 4 && (h < 12 || h > 14) ? b : c) };
 const mb = n => !n ? "" : n < 1048576 ? Math.max(1, Math.round(n / 1024)) + " КБ" : (n / 1048576 < 10 ? (n / 1048576).toFixed(1).replace(".", ",") : Math.round(n / 1048576)) + " МБ";
-const docsOf = w => (w.docs || []).filter(d => d && d.pages && d.pages.length);
+const docsOf = w => (w.docs || []).filter(d => d && (d.pdf || (d.pages && d.pages.length)));
 const PH = 'data-ph="Изображение скоро появится"';
 
 /* шапка, подвал, кнопки */
@@ -46,7 +46,7 @@ if (niches.length > 1) {
 function card(w){
   return `<button class="card wcard rv" type="button" data-id="${esc(w.id)}" data-cur="Открыть" aria-haspopup="dialog">
 <div class="cov" ${PH}>${img(w.cover, w.coverAlt || w.title, 'loading="lazy"')}</div>
-<div class="wb"><div class="meta"><b>${esc(w.niche)}</b><span>${esc(w.type)}</span>${docsOf(w).length ? '<span class="m-pdf">PDF-альбом</span>' : ""}</div><h3>${esc(w.title)}</h3><p>${esc(w.summary)}</p>${w.badge ? `<span class="badge">${esc(w.badge)}</span>` : ""}<span class="more">Смотреть кейс</span></div></button>`;
+<div class="wb"><div class="meta"><b>${esc(w.niche)}</b><span>${esc(w.type)}</span>${docsOf(w).length ? '<span class="m-pdf">PDF</span>' : ""}</div><h3>${esc(w.title)}</h3><p>${esc(w.summary)}</p>${w.badge ? `<span class="badge">${esc(w.badge)}</span>` : ""}<span class="more">Смотреть кейс</span></div></button>`;
 }
 function draw(again){
   const list = works.filter(w => filter === "Все" || w.niche === filter);
@@ -126,12 +126,20 @@ function body(w){
   const top = media || (G.length ? car(G) : `<div class="cov m-cover" ${PH}>${img(w.cover, w.coverAlt || w.title)}</div>`);
   const gal = media && G.length ? `<div class="blk gal-b"><h3>Галерея</h3>${car(G)}</div>` : "";
   const D = docsOf(w);
-  const docs = D.length ? `<div class="blk docs-b"><h3>${D.length > 1 ? "Альбомы проекта" : "Альбом проекта"}</h3>${D.map((d, i) => {
-    const n = d.pages.length, p0 = d.pages[0], t = d.title || "Дизайн-проект", ar = p0.w && p0.h ? p0.w / p0.h : 1.414;
-    return `<div class="doc" data-doc="${i}"><button class="doc-cv" type="button" data-pg="0" data-cur="Листать" style="aspect-ratio:${p0.w || 1414} / ${p0.h || 1000};width:min(100%,${Math.round(440 * ar)}px)" aria-label="Листать альбом «${esc(t)}», ${plural(n, "страница", "страницы", "страниц")}"><span class="doc-st" aria-hidden="true"></span>${img(p0.src, "")}</button>
-<div class="doc-i"><span class="doc-k">PDF · ${plural(n, "страница", "страницы", "страниц")}</span><h4>${esc(t)}</h4>
-${n > 1 ? `<div class="doc-th">${d.pages.slice(1, 5).map((p, k) => `<button type="button" data-pg="${k + 1}" aria-label="Открыть страницу ${k + 2}"><img src="${esc(p.src)}" alt="" loading="lazy" onerror="this.remove()"></button>`).join("")}${n > 5 ? `<span>+${n - 5}</span>` : ""}</div>` : ""}
-<div class="doc-b"><button class="btn btn-p" type="button" data-pg="0">Листать альбом</button>${d.pdf ? `<a class="btn btn-s" href="${esc(d.pdf)}" download>Скачать PDF${d.size ? " · " + mb(d.size) : ""}</a>` : ""}</div></div></div>`;
+  const docs = D.length ? `<div class="blk docs-b"><h3>${D.length > 1 ? "Документы проекта" : "Документ проекта"}</h3>${D.map((d, i) => {
+    const P = d.pages || [], c = d.cover || P[0], n = d.count || P.length, t = d.title || "Дизайн-проект", ar = c && c.w && c.h ? c.w / c.h : 1.414, flip = P.length > 0;
+    const pdfIco = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>';
+    const cv = `<span class="doc-st" aria-hidden="true"></span>${c ? img(c.src, "") : `<span class="doc-ph">${pdfIco}PDF</span>`}`, cst = `style="aspect-ratio:${c && c.w ? c.w + " / " + c.h : "1414 / 1000"};width:min(100%,${Math.round(440 * ar)}px)"`;
+    const lbl = `${esc(t)}, ${plural(n, "страница", "страницы", "страниц")}`;
+    const cover = flip ? `<button class="doc-cv" type="button" data-pg="0" data-cur="Листать" ${cst} aria-label="Листать: ${lbl}">${cv}</button>`
+      : `<a class="doc-cv" href="${esc(d.pdf)}" target="_blank" rel="noopener" data-cur="Открыть" ${cst} aria-label="Открыть PDF: ${lbl}">${cv}</a>`;
+    const meta = ["PDF", n ? plural(n, "страница", "страницы", "страниц") : "", d.size ? mb(d.size) : ""].filter(Boolean).join(" · ");
+    const btns = (flip ? `<button class="btn btn-p" type="button" data-pg="0">Листать</button>` : "")
+      + (d.pdf ? `<a class="btn ${flip ? "btn-s" : "btn-p"}" href="${esc(d.pdf)}" target="_blank" rel="noopener">Открыть PDF</a><a class="btn btn-s" href="${esc(d.pdf)}" download>Скачать</a>` : "");
+    return `<div class="doc" data-doc="${i}">${cover}
+<div class="doc-i"><span class="doc-k">${meta}</span><h4>${esc(t)}</h4>
+${flip && P.length > 1 ? `<div class="doc-th">${P.slice(1, 5).map((p, k) => `<button type="button" data-pg="${k + 1}" aria-label="Открыть страницу ${k + 2}"><img src="${esc(p.src)}" alt="" loading="lazy" onerror="this.remove()"></button>`).join("")}${P.length > 5 ? `<span>+${P.length - 5}</span>` : ""}</div>` : ""}
+<div class="doc-b">${btns}</div></div></div>`;
   }).join("")}</div>` : "";
   const blk = (t, h) => h ? `<div class="blk"><h3>${t}</h3>${h}</div>` : "";
   return `<div class="mh"><div class="meta"><b>${esc(w.niche)}</b><span>${esc(w.type)}</span></div><h2 id="mTitle">${esc(w.title)}</h2><p>${esc(w.summary)}</p>${w.badge ? `<span class="badge">${esc(w.badge)}</span>` : ""}</div>
@@ -151,7 +159,7 @@ function open(id, from){
   if (cmp) { const r = cmp.querySelector("input"); r.addEventListener("input", () => cmp.style.setProperty("--pos", r.value + "%")) }
   mc.querySelectorAll(".car").forEach(initCar);
   const D = docsOf(w);
-  mc.querySelectorAll(".doc").forEach(el => { const d = D[+el.dataset.doc], t = d.title || "Дизайн-проект", n = d.pages.length;
+  mc.querySelectorAll(".doc").forEach(el => { const d = D[+el.dataset.doc], t = d.title || "Дизайн-проект", n = (d.pages || []).length; if (!n) return;
     const G = d.pages.map((p, k) => ({ src: p.src, alt: `${t}, страница ${k + 1}`, caption: `${t} · ${k + 1} из ${n}`, tall: false, page: true }));
     el.addEventListener("click", e => { const b = e.target.closest("[data-pg]"); if (b) lbOpen(G, +b.dataset.pg, b) }) });
   ov.classList.add("open"); document.body.classList.add("lock"); ov.scrollTop = 0;

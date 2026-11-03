@@ -352,3 +352,6 @@ body.lock{overflow:hidden}
 .lb-sc img.zm{cursor:zoom-in}
 .lb-sc img.zm.zoom{cursor:zoom-out;max-height:none;width:min(100%,2200px);max-width:none;margin:0 auto}
 @media(prefers-reduced-motion:reduce){.doc-cv img{transition:none}}
+a.doc-cv{text-decoration:none}
+.doc-ph{position:relative;z-index:2;display:grid;place-items:center;align-content:center;gap:8px;width:100%;height:100%;border-radius:6px;background:#fff;color:#c0392b;font:700 18px/1 var(--fh);box-shadow:0 1px 2px rgba(0,0,0,.08),0 24px 48px -16px rgba(0,0,0,.42)}
+.doc-ph svg{width:56px;height:56px}
