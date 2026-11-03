@@ -17,9 +17,12 @@ const esc = v => String(v == null ? "" : v).replace(/[&<>"']/g, c => ({ "&":"&am
 const nbRe = /(^|[\s«(])(в|к|с|у|и|а|о|на|за|по|из|от|до|для|не|но)\s+/gi;
 const nbs = t => t.replace(nbRe, "$1$2 ").replace(nbRe, "$1$2 ").replace(/\s+—/g, " —");
 function nb(el){ const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) { const v = nbs(n.nodeValue); if (v !== n.nodeValue) n.nodeValue = v } }
-const img = (src, alt, extra = "") => `<img src="${esc(src)}" alt="${esc(alt)}" ${extra} onerror="this.closest('.cov,.cmp,.car-i').classList.add('noimg');this.remove()">`;
+const img = (src, alt, extra = "") => `<img src="${esc(src)}" alt="${esc(alt)}" ${extra} onerror="this.closest('.cov,.cmp,.car-i,.doc-cv').classList.add('noimg');this.remove()">`;
 const arrow = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d ? "M9 6l6 6-6 6" : "M15 6l-6 6 6 6"}"/></svg>`;
 const isTall = g => g.w && g.h && g.h / g.w > 1.35;
+const plural = (n, a, b, c) => { const m = n % 10, h = n % 100; return n + " " + (m === 1 && h !== 11 ? a : m >= 2 && m <= 4 && (h < 12 || h > 14) ? b : c) };
+const mb = n => !n ? "" : n < 1048576 ? Math.max(1, Math.round(n / 1024)) + " КБ" : (n / 1048576 < 10 ? (n / 1048576).toFixed(1).replace(".", ",") : Math.round(n / 1048576)) + " МБ";
+const docsOf = w => (w.docs || []).filter(d => d && d.pages && d.pages.length);
 const PH = 'data-ph="Изображение скоро появится"';
 
 /* шапка, подвал, кнопки */
@@ -43,7 +46,7 @@ if (niches.length > 1) {
 function card(w){
   return `<button class="card wcard rv" type="button" data-id="${esc(w.id)}" data-cur="Открыть" aria-haspopup="dialog">
 <div class="cov" ${PH}>${img(w.cover, w.coverAlt || w.title, 'loading="lazy"')}</div>
-<div class="wb"><div class="meta"><b>${esc(w.niche)}</b><span>${esc(w.type)}</span></div><h3>${esc(w.title)}</h3><p>${esc(w.summary)}</p>${w.badge ? `<span class="badge">${esc(w.badge)}</span>` : ""}<span class="more">Смотреть кейс</span></div></button>`;
+<div class="wb"><div class="meta"><b>${esc(w.niche)}</b><span>${esc(w.type)}</span>${docsOf(w).length ? '<span class="m-pdf">PDF-альбом</span>' : ""}</div><h3>${esc(w.title)}</h3><p>${esc(w.summary)}</p>${w.badge ? `<span class="badge">${esc(w.badge)}</span>` : ""}<span class="more">Смотреть кейс</span></div></button>`;
 }
 function draw(again){
   const list = works.filter(w => filter === "Все" || w.niche === filter);
@@ -95,7 +98,8 @@ const lbImg = lb.querySelector("img"), lbSc = lb.querySelector(".lb-sc");
 let lbI = 0, lbFrom = null;
 function lbShow(k){
   lbI = (k + curGal.length) % curGal.length; const g = curGal[lbI];
-  lbImg.src = g.src; lbImg.alt = g.alt || g.caption || ""; lbImg.classList.toggle("tall", g.tall); lbSc.scrollTop = 0;
+  lbImg.src = g.src; lbImg.alt = g.alt || g.caption || ""; lbImg.classList.toggle("tall", g.tall); lbImg.classList.remove("zoom"); lbImg.classList.toggle("zm", !g.tall); lbSc.scrollTop = 0;
+  [1, -1].forEach(o => { const nx = curGal[(lbI + o + curGal.length) % curGal.length]; if (nx && nx !== g) new Image().src = nx.src });
   lb.querySelector(".lb-n").textContent = curGal.length > 1 ? (lbI + 1) + " / " + curGal.length : "";
   lb.querySelector(".lb-cap").textContent = g.caption || "";
   lb.querySelectorAll(".lb-b").forEach(b => b.hidden = curGal.length < 2);
@@ -105,7 +109,7 @@ function lbClose(){ lb.hidden = true; lbImg.removeAttribute("src"); if (lbFrom) 
 lb.querySelector(".lb-x").onclick = lbClose;
 lb.querySelector(".lb-b.p").onclick = () => lbShow(lbI - 1);
 lb.querySelector(".lb-b.n").onclick = () => lbShow(lbI + 1);
-lbSc.addEventListener("click", e => { if (e.target === lbSc) lbClose() });
+lbSc.addEventListener("click", e => { if (e.target === lbSc) lbClose(); else if (e.target === lbImg && lbImg.classList.contains("zm")) { const z = lbImg.classList.toggle("zoom"); if (z) lbSc.scrollTop = 0 } });
 let tx = 0, ty = 0;
 lbSc.addEventListener("touchstart", e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY }, { passive: true });
 lbSc.addEventListener("touchend", e => { const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
@@ -121,6 +125,14 @@ function body(w){
   /* без сравнения галерея встаёт наверх вместо обложки, со сравнением — под текстом */
   const top = media || (G.length ? car(G) : `<div class="cov m-cover" ${PH}>${img(w.cover, w.coverAlt || w.title)}</div>`);
   const gal = media && G.length ? `<div class="blk gal-b"><h3>Галерея</h3>${car(G)}</div>` : "";
+  const D = docsOf(w);
+  const docs = D.length ? `<div class="blk docs-b"><h3>${D.length > 1 ? "Альбомы проекта" : "Альбом проекта"}</h3>${D.map((d, i) => {
+    const n = d.pages.length, p0 = d.pages[0], t = d.title || "Дизайн-проект", ar = p0.w && p0.h ? p0.w / p0.h : 1.414;
+    return `<div class="doc" data-doc="${i}"><button class="doc-cv" type="button" data-pg="0" data-cur="Листать" style="aspect-ratio:${p0.w || 1414} / ${p0.h || 1000};width:min(100%,${Math.round(440 * ar)}px)" aria-label="Листать альбом «${esc(t)}», ${plural(n, "страница", "страницы", "страниц")}"><span class="doc-st" aria-hidden="true"></span>${img(p0.src, "")}</button>
+<div class="doc-i"><span class="doc-k">PDF · ${plural(n, "страница", "страницы", "страниц")}</span><h4>${esc(t)}</h4>
+${n > 1 ? `<div class="doc-th">${d.pages.slice(1, 5).map((p, k) => `<button type="button" data-pg="${k + 1}" aria-label="Открыть страницу ${k + 2}"><img src="${esc(p.src)}" alt="" loading="lazy" onerror="this.remove()"></button>`).join("")}${n > 5 ? `<span>+${n - 5}</span>` : ""}</div>` : ""}
+<div class="doc-b"><button class="btn btn-p" type="button" data-pg="0">Листать альбом</button>${d.pdf ? `<a class="btn btn-s" href="${esc(d.pdf)}" download>Скачать PDF${d.size ? " · " + mb(d.size) : ""}</a>` : ""}</div></div></div>`;
+  }).join("")}</div>` : "";
   const blk = (t, h) => h ? `<div class="blk"><h3>${t}</h3>${h}</div>` : "";
   return `<div class="mh"><div class="meta"><b>${esc(w.niche)}</b><span>${esc(w.type)}</span></div><h2 id="mTitle">${esc(w.title)}</h2><p>${esc(w.summary)}</p>${w.badge ? `<span class="badge">${esc(w.badge)}</span>` : ""}</div>
 <div class="mb">${top}<div class="mg">
@@ -128,7 +140,7 @@ ${blk("Задача", w.task ? `<p>${esc(w.task)}</p>` : "")}
 ${blk("Что сделано", (w.done || []).length ? `<ul class="ck">${w.done.map(d => `<li>${esc(d)}</li>`).join("")}</ul>` : "")}
 ${blk("Инструменты", (w.tools || []).length ? `<div class="pills">${w.tools.map(t => `<span>${esc(t)}</span>`).join("")}</div>` : "")}
 ${blk("Итог", w.result ? `<p>${esc(w.result)}</p>` : "")}
-</div>${gal}
+</div>${docs}${gal}
 <div class="mf"><p>Похожая задача? Напишите — обсудим.</p><a class="btn btn-p" href="${tgUrl}" target="_blank" rel="noopener noreferrer">${tgIcon}Обсудить проект</a></div></div>`;
 }
 function open(id, from){
@@ -138,6 +150,10 @@ function open(id, from){
   const cmp = mc.querySelector(".cmp");
   if (cmp) { const r = cmp.querySelector("input"); r.addEventListener("input", () => cmp.style.setProperty("--pos", r.value + "%")) }
   mc.querySelectorAll(".car").forEach(initCar);
+  const D = docsOf(w);
+  mc.querySelectorAll(".doc").forEach(el => { const d = D[+el.dataset.doc], t = d.title || "Дизайн-проект", n = d.pages.length;
+    const G = d.pages.map((p, k) => ({ src: p.src, alt: `${t}, страница ${k + 1}`, caption: `${t} · ${k + 1} из ${n}`, tall: false, page: true }));
+    el.addEventListener("click", e => { const b = e.target.closest("[data-pg]"); if (b) lbOpen(G, +b.dataset.pg, b) }) });
   ov.classList.add("open"); document.body.classList.add("lock"); ov.scrollTop = 0;
   $("#mClose").focus();
   try { history.replaceState(null, "", "#" + id) } catch (_) {}
