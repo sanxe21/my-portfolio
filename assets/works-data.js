@@ -315,6 +315,61 @@ const WORKS = [
       "Сделал две версии освещения одной комнаты: дневную с тюлем и вечернюю с тёплой подсветкой",
       "Доработал финальные кадры с помощью нейросети: свет, детали и атмосфера"
     ],
-    "gallery": []
+    "gallery": [],
+    "docs": [
+      {
+        "title": "Дизайн-проект интерьера (1)",
+        "count": 8,
+        "pdf": "assets/works/bedroom-slats-mw3i9hchezv.pdf",
+        "size": 1534262,
+        "cover": {
+          "src": "assets/works/bedroom-slats-mw3i9hchezv-cover.webp",
+          "w": 1400,
+          "h": 788
+        },
+        "pages": [
+          {
+            "src": "assets/works/bedroom-slats-mw3i9hchezv-mw3i9l0l-p01.webp",
+            "w": 2200,
+            "h": 1238
+          },
+          {
+            "src": "assets/works/bedroom-slats-mw3i9hchezv-mw3i9l0l-p02.webp",
+            "w": 2200,
+            "h": 1238
+          },
+          {
+            "src": "assets/works/bedroom-slats-mw3i9hchezv-mw3i9l0l-p03.webp",
+            "w": 2200,
+            "h": 1238
+          },
+          {
+            "src": "assets/works/bedroom-slats-mw3i9hchezv-mw3i9l0l-p04.webp",
+            "w": 2200,
+            "h": 1238
+          },
+          {
+            "src": "assets/works/bedroom-slats-mw3i9hchezv-mw3i9l0l-p05.webp",
+            "w": 2200,
+            "h": 1238
+          },
+          {
+            "src": "assets/works/bedroom-slats-mw3i9hchezv-mw3i9l0l-p06.webp",
+            "w": 2200,
+            "h": 1238
+          },
+          {
+            "src": "assets/works/bedroom-slats-mw3i9hchezv-mw3i9l0l-p07.webp",
+            "w": 2200,
+            "h": 1238
+          },
+          {
+            "src": "assets/works/bedroom-slats-mw3i9hchezv-mw3i9l0l-p08.webp",
+            "w": 2200,
+            "h": 1238
+          }
+        ]
+      }
+    ]
   }
 ];
