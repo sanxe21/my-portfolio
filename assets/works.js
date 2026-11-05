@@ -34,11 +34,13 @@ $("#fab").href = tgUrl; $("#fab").innerHTML = tgIcon;
 $("#copyright").textContent = "© " + new Date().getFullYear() + " " + OWNER.name + ". Все права защищены.";
 
 /* фильтр и карточки */
-const niches = [...new Set(works.map(w => w.niche).filter(Boolean))];
+/* основная ниша + дополнительные (tags): кейс виден в фильтре каждой из них */
+const nicheList = w => [...new Set([w.niche, ...(w.tags || [])].filter(Boolean))];
+const niches = [...new Set(works.flatMap(nicheList))];
 let filter = "Все";
 const chips = $("#chips"), grid = $("#wk");
 if (niches.length > 1) {
-  const all = [["Все", works.length], ...niches.map(n => [n, works.filter(w => w.niche === n).length])];
+  const all = [["Все", works.length], ...niches.map(n => [n, works.filter(w => nicheList(w).includes(n)).length])];
   chips.innerHTML = all.map(([n, c]) => `<button class="chip" type="button" data-n="${esc(n)}" aria-pressed="${n === filter}">${esc(n)}<i>${c}</i></button>`).join("");
   chips.addEventListener("click", e => { const b = e.target.closest(".chip"); if (!b) return; filter = b.dataset.n;
     chips.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", c === b)); draw(true) });
@@ -46,10 +48,10 @@ if (niches.length > 1) {
 function card(w){
   return `<button class="card wcard rv" type="button" data-id="${esc(w.id)}" data-cur="Открыть" aria-haspopup="dialog">
 <div class="cov" ${PH}>${img(w.cover, w.coverAlt || w.title, 'loading="lazy"')}</div>
-<div class="wb"><div class="meta"><b>${esc(w.niche)}</b><span>${esc(w.type)}</span>${docsOf(w).length ? '<span class="m-pdf">PDF</span>' : ""}</div><h3>${esc(w.title)}</h3><p>${esc(w.summary)}</p>${w.badge ? `<span class="badge">${esc(w.badge)}</span>` : ""}<span class="more">Смотреть кейс</span></div></button>`;
+<div class="wb"><div class="meta"><b>${esc(nicheList(w).join(" · "))}</b><span>${esc(w.type)}</span>${docsOf(w).length ? '<span class="m-pdf">PDF</span>' : ""}</div><h3>${esc(w.title)}</h3><p>${esc(w.summary)}</p>${w.badge ? `<span class="badge">${esc(w.badge)}</span>` : ""}<span class="more">Смотреть кейс</span></div></button>`;
 }
 function draw(again){
-  const list = works.filter(w => filter === "Все" || w.niche === filter);
+  const list = works.filter(w => filter === "Все" || nicheList(w).includes(filter));
   grid.classList.toggle("solo", list.length === 1);
   grid.innerHTML = list.map(card).join("");
   $("#wkEmpty").hidden = list.length > 0;
@@ -142,7 +144,7 @@ ${flip && P.length > 1 ? `<div class="doc-th">${P.slice(1, 5).map((p, k) => `<bu
 <div class="doc-b">${btns}</div></div></div>`;
   }).join("")}</div>` : "";
   const blk = (t, h) => h ? `<div class="blk"><h3>${t}</h3>${h}</div>` : "";
-  return `<div class="mh"><div class="meta"><b>${esc(w.niche)}</b><span>${esc(w.type)}</span></div><h2 id="mTitle">${esc(w.title)}</h2><p>${esc(w.summary)}</p>${w.badge ? `<span class="badge">${esc(w.badge)}</span>` : ""}</div>
+  return `<div class="mh"><div class="meta"><b>${esc(nicheList(w).join(" · "))}</b><span>${esc(w.type)}</span></div><h2 id="mTitle">${esc(w.title)}</h2><p>${esc(w.summary)}</p>${w.badge ? `<span class="badge">${esc(w.badge)}</span>` : ""}</div>
 <div class="mb">${top}<div class="mg">
 ${blk("Задача", w.task ? `<p>${esc(w.task)}</p>` : "")}
 ${blk("Что сделано", (w.done || []).length ? `<ul class="ck">${w.done.map(d => `<li>${esc(d)}</li>`).join("")}</ul>` : "")}

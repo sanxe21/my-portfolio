@@ -13,8 +13,8 @@ const HEAD = `/*
   Вручную тоже можно, но сохраняйте формат JSON: ключи и строки в двойных кавычках, без комментариев внутри списка.
 */
 `;
-const NICHES = ["Интерьеры", "Сайты", "Презентации", "Визуалы", "Маркетинг"];
-const TYPES = ["3D-визуализация", "Лендинг", "Сайт-визитка", "Многостраничный сайт", "Презентация", "Карусель для соцсетей", "Баннеры", "Контент-план"];
+const NICHES = ["Интерьеры", "Сайты", "Презентации", "Аналитика", "Визуалы", "Маркетинг"];
+const TYPES = ["Аналитический обзор", "3D-визуализация", "Лендинг", "Сайт-визитка", "Многостраничный сайт", "Презентация", "Карусель для соцсетей", "Баннеры", "Контент-план"];
 let token = sTok.get() || "", data = [], orig = [], fileSha = "", editIdx = -1, cur = null, snap = "", idTouched = false, stash = null;
 const pend = new Map(); /* путь в репозитории → { blob, url, done } */
 
@@ -63,7 +63,10 @@ async function load(){
 /* данные */
 function side(x){ const o = { src: x.src, label: s(x.label) }; if (s(x.alt)) o.alt = s(x.alt); if (x.w && x.h) { o.w = x.w; o.h = x.h } return o }
 function tidy(w){
-  const o = { id: w.id, niche: s(w.niche), type: s(w.type), title: s(w.title), summary: s(w.summary) };
+  const o = { id: w.id, niche: s(w.niche) };
+  const tg = [...new Set((Array.isArray(w.tags) ? w.tags : String(w.tags || "").split(",")).map(s).filter(t => t && t !== o.niche))];
+  if (tg.length) o.tags = tg;
+  Object.assign(o, { type: s(w.type), title: s(w.title), summary: s(w.summary) });
   if (s(w.badge)) o.badge = s(w.badge);
   if (w.draft) o.draft = true;
   const G = (w.gallery || []).filter(g => g && g.src), C = w.compare && w.compare.before && w.compare.after && w.compare.before.src && w.compare.after.src ? w.compare : null;
@@ -141,9 +144,10 @@ function cmpWarn(){
 function drawForm(){
   const c = cur.compare, G = cur.gallery;
   $("#fEdit").innerHTML = `
-${opts("dlN", [...data.map(w => w.niche), ...NICHES])}${opts("dlT", [...data.map(w => w.type), ...TYPES])}
+${opts("dlN", [...data.flatMap(w => [w.niche, ...(w.tags || [])]), ...NICHES])}${opts("dlT", [...data.map(w => w.type), ...TYPES])}
 ${field("title", "Название *", { ph: "Например: Лендинг для барбершопа" })}
 <div class="row2">${field("niche", "Ниша *", { list: "dlN", hint: "По нишам работают фильтры на странице работ." })}${field("type", "Тип работы", { list: "dlT" })}</div>
+${field("tags", "Дополнительные ниши", { value: (Array.isArray(cur.tags) ? cur.tags : []).join(", "), ph: "Например: Презентации, Маркетинг", hint: "Через запятую. Кейс появится и в этих фильтрах. Основная ниша показывается первой." })}
 ${field("summary", "Короткое описание для карточки", { area: true, rows: 2, ph: "1–2 предложения: что это и чем интересно" })}
 <div class="row2">${field("id", "Адрес кейса", { hint: `Ссылка: pvltsk.ru/works.html#<span id="idv">${esc(cur.id || "…")}</span>` })}${field("badge", "Пометка на карточке", { ph: "Например: Новое", hint: "Необязательно." })}</div>
 <label class="chk"><input type="checkbox" data-k="draft"${cur.draft ? " checked" : ""}><span><b>Черновик</b> — не показывать на сайте, пока не сниму галочку</span></label>
@@ -203,6 +207,7 @@ fE.addEventListener("input", e => {
   if (k === "done") cur.done = t.value.split("\n").map(x => x.trim()).filter(Boolean);
   else if (k === "draft") cur.draft = t.checked;
   else if (k === "id") { idTouched = true; cur.id = t.value; $("#idv").textContent = slug(t.value) || "…" }
+  else if (k === "tags") cur.tags = t.value.split(",").map(x => x.trim()).filter(Boolean);
   else setK(k, t.value);
   if (k === "title" && !idTouched) { cur.id = slug(t.value); const f = fE.querySelector("[data-k=id]"); f.value = cur.id; $("#idv").textContent = cur.id || "…" }
 });
