@@ -355,3 +355,9 @@ body.lock{overflow:hidden}
 a.doc-cv{text-decoration:none}
 .doc-ph{position:relative;z-index:2;display:grid;place-items:center;align-content:center;gap:8px;width:100%;height:100%;border-radius:6px;background:#fff;color:#c0392b;font:700 18px/1 var(--fh);box-shadow:0 1px 2px rgba(0,0,0,.08),0 24px 48px -16px rgba(0,0,0,.42)}
 .doc-ph svg{width:56px;height:56px}
+/* сроки в карточках услуг */
+.svc .svc-t{margin-top:auto;padding-top:16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:2px;font:500 15px/22px var(--fb);color:var(--text)}
+.svc .svc-t span{font:600 12px/18px var(--fb);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.svc-note{margin-top:24px;max-width:760px;color:var(--muted)}
+.svc{display:flex;flex-direction:column}
+.svc ul{margin-bottom:24px}
