@@ -4,11 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>try{var t=localStorage.getItem("theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
-<title>Александр Поволоцкий — аналитика, презентации и визуализация интерьеров</title>
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<title>PVLTSK — аналитика, презентации и визуализация интерьеров</title>
 <meta name="description" content="Александр Поволоцкий — аналитика по открытым данным, презентации под ключ и визуализация интерьеров. Кейсы, сроки и контакты.">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ru_RU">
-<meta property="og:title" content="Александр Поволоцкий — аналитика, презентации и визуализация интерьеров">
+<meta property="og:title" content="PVLTSK — аналитика, презентации и визуализация интерьеров">
 <meta property="og:description" content="Аналитика, презентации под ключ и визуализация интерьеров: услуги, сроки, кейсы, контакты.">
 <meta property="og:url" content="https://pvltsk.ru/">
 <link rel="canonical" href="https://pvltsk.ru/">
@@ -149,7 +153,7 @@ function render(){
 $("#logo").innerHTML=wordmark;$("#logo").setAttribute("aria-label",SITE.brand+" — на главную");$("#fwm").innerHTML=wordmark;
 const g=SITE.fields.map(f=>`<span>${f}</span><i></i>`).join("").repeat(4);$("#mq").innerHTML=`<div class="mq-t">${g+g}</div>`;
 $("#menu").innerHTML=menu.map(m=>`<li><a href="${m[0]}">${m[1]}</a></li>`).join("")+'<li><a class="nav-work" href="works.html">Мои работы</a></li>';
-$("#eyebrow").textContent=SITE.name+" — "+SITE.role;
+$("#eyebrow").textContent="PVLTSK — "+SITE.role;
 $("#h1").textContent=SITE.h1;$("#lead").textContent=SITE.lead;
 [["#tgBtn","Написать в Telegram"],["#tgBig","Написать в Telegram"]].forEach(([s,t])=>{const a=$(s);a.href=tgUrl;a.innerHTML=tgIcon+t});
 $("#fab").href=tgUrl;$("#fab").innerHTML=tgIcon;
