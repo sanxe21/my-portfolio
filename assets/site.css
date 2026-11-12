@@ -361,3 +361,18 @@ a.doc-cv{text-decoration:none}
 .svc-note{margin-top:24px;max-width:760px;color:var(--muted)}
 .svc{display:flex;flex-direction:column}
 .svc ul{margin-bottom:24px}
+/* банки-партнёры */
+.bank{padding:32px;display:flex;flex-direction:column;gap:14px}
+.bank h3{font-size:24px;line-height:32px}
+.bank p{color:var(--muted)}
+/* частые вопросы */
+.faq{max-width:860px;border-top:1px solid var(--border)}
+.faq-i{border-bottom:1px solid var(--border)}
+.faq-i summary{list-style:none;cursor:pointer;position:relative;padding:22px 48px 22px 0;font:600 18px/26px var(--fh);color:var(--text)}
+.faq-i summary::-webkit-details-marker{display:none}
+.faq-i summary::after{content:"+";position:absolute;right:8px;top:50%;transform:translateY(-50%);font:400 28px/1 var(--fb);color:var(--accent);transition:transform .25s}
+.faq-i[open] summary::after{transform:translateY(-50%) rotate(45deg)}
+.faq-i summary:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:4px}
+.faq-i p{padding:0 48px 22px 0;color:var(--muted);max-width:44em}
+/* раскрытие партнёрства */
+.disc{margin:0 0 16px;max-width:62em;color:var(--muted);font-size:13px;line-height:20px}
